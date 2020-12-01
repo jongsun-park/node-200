@@ -1,0 +1,27 @@
+const express = require("express");
+const fs = require("fs");
+const multipart = require("connect-multiparty");
+
+const app = express();
+
+app.use(multipart({ uploadDir: `${__dirname}/upload` }));
+
+app.get("/", (request, response) => {
+  fs.readFile(`${__dirname}/connect-multiparty.html`, (err, data) => {
+    response.send(data.toString());
+  });
+});
+
+app.post("/", (request, response) => {
+  const imgFile = request.files.image;
+  const outputPath = `${__dirname}/upload/${Date.now()}_${imgFile.name}`;
+  console.log(outputPath);
+  console.log(request.body, request.files);
+  fs.rename(imgFile.path, outputPath, () => {
+    response.redirect("/");
+  });
+});
+
+app.listen(3003, () => {
+  console.log("Server running at http://127.0.0.1:3003");
+});

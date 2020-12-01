@@ -883,3 +883,382 @@ html
                     #{number} X #{i} = #{number * i}
             - }
 ```
+
+## 159 winston 모듈(로그 파일)
+
+로거(logger): 로그를 출력하는 객체, transports라는 속성 값으로 설정 정보를 전달할 수 있다.
+
+tsFormat(): 로그에 시간을 기록
+
+Logging Levels: 어떤 정보까지 출력할 것인지 결정
+
+winston-daily-rotate-file: 새로운 파일에 로그를 기록하도록 설정
+
+[winston](https://github.com/winstonjs/winston)
+
+[winston-daily-rotate-file](https://www.npmjs.com/package/winston-daily-rotate-file)
+
+[moment](https://momentjs.com/)
+
+## 160 express 모듈 1 - overview
+
+express 모듈을 사용해서 웹 서버를 보다 쉽게 개발 할 수 있다.
+express() 함수를 호출하여 객체를 만들고, get/post()를 사용하여 url 요청 로직을 작성하고, listn() 함수를 실행하여 서버를 동작 시킨다.
+
+```js
+const express = require("express");
+
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Hello express module");
+});
+
+app.listen(3000, () => {
+  console.log("Server running at http://127.0.0.1:3000");
+});
+```
+
+## 161 express 모듈 2 - response
+
+- res.download(): 다운로드
+- res.end(): 응답 프로세스 종료
+- res.json()
+- res.jsonp()
+- res.redirect(): 경로 재지정
+- res.render(): 템플릿을 렌더링
+- res.send(): HTML, 객체 JSON, 배열 JSON
+- res.sendFile(): 파일 전송
+- res.sendStatus(): 응담 상태 코드
+- res.status(404).send('404 ERROR')
+
+## 162 rexpress 모듈 3 - request
+
+request 객체
+
+- headers: 요청 헤더 추출
+- Header(): 요청 헤더의 속성 지정 또는 추출
+- query: GET 방식으로 요청한 매개변수
+- body: POST 방식으로 요청한 매개변수
+- params: 라우팅 매개변수 추출
+
+```js
+const express = require("express");
+
+const app = express();
+
+app.get("/", (req, res) => {
+  const agent = req.header("User-Agent");
+  const paramName = req.query.name;
+  const browserChrome = "Hello Chrome";
+  const browserOthers = "Hello Others";
+
+  console.log(req.headers);
+  console.log(req.baseUrl);
+  console.log(req.hostname);
+  console.log(req.protocol);
+
+  if (agent.toLowerCase().match(/chrome/)) {
+    res.write(`<div><p>${browserChrome}</p></div>`);
+  } else {
+    res.write(`<div><p>${browserOthers}</p></div>`);
+  }
+  res.write(`<div><p>${agent}</p></div>`);
+  res.write(`<div><p>${paramName}</p></div>`);
+  res.end();
+});
+
+app.listen(3000, () => {
+  console.log(`Server running at http://127.0.0.1:3000`);
+});
+```
+
+## 163 express 모듈 4 - 미들웨어
+
+미들웨어 ([미들웨어 함수 목록](https://github.com/senchalabs/connect#middleware))
+
+- express 모듈을 실행하는 동안 request, response 과정 중에 다른 로직을 실행할 수 있도록 분리된 함수
+- use() 함수를 통해 이벤트 리스너를 연결
+  - `app.use( (req, res, next) => {} )`
+- 미들웨어를 사용함으로써 특정 목적에 맞는 모듈을 분리해 재활용할 수 있다.
+- res.end() 를 작성하시않으면, 계속 응답을 기다리기 때문에, 브라우저에 전달 되지 않는다.
+
+```js
+const express = require("express");
+
+const app = express();
+
+app.use((req, res, next) => {
+  console.log("첫번째 미들웨어에 요청");
+  req.user1 = "철수";
+  next();
+});
+
+app.use((req, res, next) => {
+  console.log("두번째 미들웨어에 요청");
+  req.user2 = "영이";
+  next();
+});
+
+app.use((req, res, next) => {
+  console.log("세번째 미들웨어에 요청");
+  res.writeHead(200, { "Content-Type": "text/html;charset=utf8" });
+  res.write(`<div><p>${req.user1}</p></div>`);
+  res.write(`<div><p>${req.user2}</p></div>`);
+  res.end(`<h1>express 서버에서 응답한 결과</h1>`);
+});
+
+app.listen(3000, () => {
+  console.log("Server running at http://120.0.0.1:3000");
+});
+```
+
+## express 모듈 5 - static 미들웨어
+
+express의 static 모듈을 사용해서 이미지, javascript 파일, css 파일을 처리 할 수 있다.
+
+static 경로의 모든 파일은 루트 경로로 옮겨 진다.
+
+`express.static(root, [options])`
+
+`app.use(express.static('public'))`
+
+`app.use('/static', express.static(path.join(__dirname, 'public')))`:
+
+- `__dirname/public/images/sameple.jpg`
+- `http://127.0.0.1:3000/static/images/sample.jpg`
+- 입력한 경로 폴더를 지정한 경로안에서 사용 가능 하도록 한다.
+
+```js
+const express = require("express");
+
+const app = express();
+
+app.use(express.static(`${__dirname}/multimedia`));
+app.use((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/html;charset=utg8" });
+  res.end('<img src="/newyork.jpg" width="100%"/>');
+});
+
+app.listen(3000, () => {
+  console.log("Server is running at http://127.0.0.1:3000");
+});
+```
+
+## 165 express 모듈 6 - body parser 미들웨어
+
+body-parser
+
+- 사용자가 보낸 데이터를 추출할 수 있다.
+- request 객체에 body 속성이 부여된다.
+
+- GET(query), POST(body)를 구분해서 변수에 담는다.
+
+  - `const userId = req.query.userId | req.body.userId ;`
+  - GET: `req.query.userId`, `req.query.password`
+  - POST: `req.body.userId`, `req.body.password`
+
+body parser 미들웨어는 `application/x=www-form-urlencoded` 인코딩 방식만 지원한다.: `bodyParser.urlencoded({ extended: false })`
+
+json 파싱:`bodyParser.json()`
+
+```js
+const express = require("express");
+const bodyParser = require("body-parser");
+
+const app = express();
+
+// application/x=www-form-urlencoded 파싱
+app.use(bodyParser.urlencoded({ extended: false })); // parsing the url-encoded data with the queryString library
+// application/json 파싱
+app.use(bodyParser.json());
+
+// __dirname/login/login.html
+// http://127.0.0.1:3000/login.html
+app.use(express.static(`${__dirname}/login`));
+
+app.use((request, response) => {
+  const userId = request.body.userId || request.query.userId;
+  const userPassword = request.body.password || request.query.password;
+
+  response.writeHead(200, { "Content-Type": "text/html;charset=utf-8" });
+  response.write(`<h1>Login ID와 PW 값 입니다.</h1>`);
+  response.write(`<h1><p>${userId}</p></h1>`);
+  response.write(`<h1><p>${userPassword}</p></h1>`);
+  response.end(JSON.stringify(request.body, null, 2));
+});
+
+app.listen(3000, () => {
+  console.log("Server is running at http://127.0.0.1:3000");
+});
+```
+
+## 166 express 모듈 7 - router 미들웨어
+
+express 모듈에 기본적으로 router 가 내장되어 있다.
+
+라우팅: 에플리케이션 엔드 포인트(url) 정의, URL가 클라이언트 요청에 응답하는 방식.
+
+매개변수 전달 ( :name -> req.params.name )
+
+```js
+app.get("/one", (req, res) => {
+  res.send(`<a href="/two">Street 200</a>`);
+});
+
+app.get("/two", (req, res) => {
+  res.send(`<a href="/one">Street 100</a>`);
+});
+
+app.get("/three/:number", (req, res) => {
+  res.send(`${req.params.number} Street`);
+});
+
+app.get("/four/:number", (req, res) => {
+  res.send(`${req.params.number} Street`);
+});
+```
+
+## 167 express 모듈 8 - morgan 미들웨어
+
+moran: 웹 요청이 들어 왔을 때 로그를 출력.
+
+```js
+const express = require("express");
+const morgan = require("morgan");
+
+const app = express();
+
+app.use(morgan("combined"));
+// ::ffff:127.0.0.1 - - [01/Dec/2020:22:10:11 +0000] "GET / HTTP/1.1" 200 14 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36"
+
+app.use(morgan("common"));
+// ::ffff:127.0.0.1 - - [01/Dec/2020:22:10:11 +0000] "GET / HTTP/1.1" 200 14
+
+app.use(morgan(":method + :date"));
+// GET + Tue, 01 Dec 2020 22:10:11 GMT
+
+app.use(morgan(":status + :url"));
+// 200 + /
+
+app.use((req, res) => {
+  res.send("express morgan");
+});
+
+app.listen(3002, () =>
+  console.log("Server is running at http://127.0.0.1:3002")
+);
+```
+
+## 169 express 모듈 10 - connect-multiparty 미들웨어
+
+웹 브라우저에서 파일을 전송할 때는 multipart/form-data 인코딩 방식을 사용한다. bodyParser 은 application/x-www-form-urlencoded 인코딩 방식을 사용하므로 외부 라이브러리가 필요하다.
+
+connect-multiparty: multipart/form-data 인코딩 방식으로 파일 업도드를 지원하는 라이브러리
+
+`<form method="post" enctype="multipart/form-data">`
+
+- 파일이 업로드 되는 폼의 인코딩 방식을 "multipart/form-data"로 지정
+
+`app.use(multipart({ uploadDir: `${\_\_dirname}/upload` }));`
+
+- 업로드 위치 지정
+
+` fs.rename(imgFile.path, outputPath, () => { response.redirect("/"); });`
+
+- 파일명 중복을 피하기 위해, 파일명을 변경하고, 페이지를 기존 페이지로 변경
+
+```html
+<form method="post" enctype="multipart/form-data">
+  <!-- 생략 -->
+  <td>File:</td>
+  <td><input type="file" name="image" /></td>
+  <!-- 생략 -->
+</form>
+```
+
+```js
+const express = require("express");
+const fs = require("fs");
+const multipart = require("connect-multiparty");
+
+const app = express();
+
+app.use(multipart({ uploadDir: `${__dirname}/upload` }));
+
+app.get("/", (request, response) => {
+  fs.readFile(`${__dirname}/connect-multiparty.html`, (err, data) => {
+    response.send(data.toString());
+  });
+});
+
+app.post("/", (request, response) => {
+  const imgFile = request.files.image;
+  const outputPath = `${__dirname}/upload/${Date.now()}_${imgFile.name}`;
+  console.log(outputPath);
+  console.log(request.body, request.files);
+  fs.rename(imgFile.path, outputPath, () => {
+    response.redirect("/");
+  });
+});
+
+app.listen(3003, () => {
+  console.log("Server running at http://127.0.0.1:3003");
+});
+```
+
+## 170 express 모듈 11 - [express-session](https://www.npmjs.com/package/express-session) 미들웨어
+
+세션
+
+- 브라우저가 열려 있는 동안 만 유지
+- 서버에 사용자가 로그인했는지 여부 등의 정보를 저장하는 데 사용
+- 클라언트에 세션 구별 식별자 쿠키를 부여하고, 그 쿠키와 대응되는 저장소에 데이터를 저장
+
+- 세션 생성 하기: `app.use(session({ secret: "keyboard dog", resave: false, saveUninitialized: true,}))`
+- 세션 초기화: `if(!req.sesstion.view) req.sesstion.view = {}`
+- 세션 접근: `req.session.views['/puddle']`
+
+```js
+const express = require("express");
+const parseurl = require("parseurl");
+const session = require("express-session");
+
+const app = express();
+
+app.use(
+  session({
+    secret: "keyboard dog",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+app.use((request, response, next) => {
+  if (!request.session.views) {
+    request.session.views = {};
+  }
+  console.log(request.session);
+  const pathname = parseurl(request).pathname;
+  request.session.views[pathname] = (request.session.views[pathname] || 0) + 1;
+  next();
+});
+
+app.get("/", (req, res) => res.redirect("/puddle"));
+
+app.get(`/puddle`, (req, res) => {
+  res.send(
+    `Hello puddle! you viewd this page ${req.session.views["/puddle"]} times`
+  );
+});
+
+app.get(`/biggle`, (req, res) => {
+  res.send(
+    `Hello biggle! you viewd this page ${req.session.views["/biggle"]} times`
+  );
+});
+
+app.listen(3005, () => {
+  console.log(`Server is running at http://127.0.0.1:3005`);
+});
+```

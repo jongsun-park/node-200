@@ -444,3 +444,442 @@ http
     console.log("Server running at http://127.0.0.1:5000");
   });
 ```
+
+## 141 쿠기(Cookie) 생성
+
+```js
+const http = require("http");
+
+http
+  .createServer((req, res) => {
+    res.writeHead(200, {
+      "Content-Type": "text/html",
+      "Set-Cookie": ["soju = pork", "beer = chicken"],
+    });
+    res.end(`<h1>${req.headers.cookie}</h1>`);
+  })
+  .listen(5000, () => {
+    console.log("Server running at http://127.0.0.1:5000");
+  });
+```
+
+처음에는 아무것도 표시하지 않지만, 다시 접속하면 기존에 저장된 쿠키를 출력한다.
+
+쿠키
+
+- 사용자가 웹사이트를 접속 할 경우 '일정 기간'동안 '서버 혹은 클라이언트'에 저장되는 기록 정보
+- 사용자가 접속 할 때 마다 새로 쓰일 수 있다.
+- 헤더의 'Set-Cookie' 속성에 배열 형태로 작성 한다.
+  - `res.wirteHeader( 200, { "Set-Cookie": ["a=one", "b=two"] } )`
+
+## 쿠키 (Cookie) 추출
+
+쿠키는 JSON 형태로 저장된다
+
+-> 문자열로 바꾸기: JSON.stringify
+
+-> 키와 값으로 분리
+
+- 쿠키 ; 키 = 값
+- split(';')
+- split(':'
+  )
+
+```js
+const http = require("http");
+
+http
+  .createServer((req, res) => {
+    if (req.headers.cookie) {
+      const cookie = req.headers.cookie.split(";").map((element) => {
+        element = element.split("=");
+        return {
+          name: element[0],
+          value: element[1],
+        };
+      });
+      res.end(`<h1>${JSON.stringify(cookie)}</h1>`);
+      // [{"name":"soju","value":"pork"},{"name":" beer","value":"chicken"}]
+    }
+
+    if (!req.headers.cookie) {
+      res.writeHead(200, {
+        "Content-Type": "text/html",
+        "Set-Cookie": ["soju=pork", "beer=chicken"],
+      });
+      res.end(`<h1>Created Cookie</h1>`);
+    }
+  })
+  .listen(5000, () => {
+    console.log("Server running at http://127.0.0.1:5000");
+  });
+```
+
+## 143 Node.js 프로젝트 만들기 (build 하기)
+
+Node.js 에서의 프로젝트는 하나의 폴더나 디렉토리를 말한다. 원하는 위치에 폴더를 만들고, 안에서 `npm init` 명령어를 사용해서 `package.json` 파일을 생성한다.
+
+## 144 프로젝트 초기화 하기 - npm init
+
+`npm init`: 프로젝트 정보가 들어가 있는 `package.json` 파일 생성
+
+`package.json`: name, version, description, entry point, git respository, keywords, author, license
+
+npm: node package manager, node.js 라이브러리 관리 프로그램
+
+## 145 패키지 설치 - npm install
+
+프레임워크: 자주 사용하는 코드를 모아 놓은 것
+
+npm: 라이브러리, 패키지 등을 직접 구현해 놓은 형태
+
+`npm install <패키지이름> --save`: 새로운 프레임워크를 설치하고 package.json에 기록
+
+## 145 패키지 지우기 - npm uninstall
+
+`npm install <패키지이름>`
+
+`--save`: package.json - dependency
+
+`--save-dev`: package.json - devDependency (개발시에만 필요한 패키지를 명시하는 경우)
+
+## 147 필요한 module 설치하기
+
+예제에서 사용할 모듈
+
+- request: 서버 요청 보내기
+- cheerio: 웹페이지 크롤링
+- iconv-lite: 컴파일 과정이 필요없이 인코딩을 제공
+
+## 148 [request](https://www.npmjs.com/package/request#request---simplified-http-client)로 구글 크롤링하기
+
+크롤링: 프로그램이 웹사이트를 돌면서 정기적으로 정보를 추출하는 기술
+
+`request(옵션, 호출 후 실행할 함수)`
+
+```js
+const request = require("request");
+
+request(
+  {
+    url: "https://www.google.com/",
+    method: "GET",
+  },
+  (error, response, body) => console.log(body)
+);
+```
+
+## 149 request로 파라미터 추가해 호출하기
+
+해당 경로 (url?q='신사역맛집')을 크롤링해서 로컬 화면에 띄우기
+`https://www.google.com/search?q=신사역맛집`
+
+```js
+http
+  .createServer((req, res) => {
+    request(
+      {
+        url: "https://www.google.com/search",
+        method: "GET",
+        qs: { q: "신사역 맛집" },
+      },
+      (error, response, body) => {
+        res.writeHead(200, { "Content-Typ": "text/html" });
+        res.end(body);
+      }
+    );
+  })
+  .listen(5000, () => {
+    console.log("Server running at http://127.0.0.1:5000");
+  });
+```
+
+## 150 한글 깨지는 문제 해결하기
+
+[iconv-lite](https://www.npmjs.com/package/iconv-lite)
+
+- 문서의 인코딩을 번경 해주는 라이브러리
+- `incov.decode(body, 'euc-kr')`
+- http 요청을 보낼 떄 인코딩을 설정해줘야 한다. (encoding: null)
+
+euc-kr(Extended Unix Code)
+
+- EUC-KR: 한글, 한자, 영문을 표기 (한글: 2 Byte)
+- UTF-8: 범용 유니코드 (한글: 3 Byte, 공백: 1 Byte)
+
+```js
+request(
+  {
+    url: "https://www.google.com/search",
+    method: "GET",
+    qs: { q: "신사역 맛집" },
+    encoding: null,
+  },
+  (error, response, body) => {
+    res.writeHead(200, { "Content-Typ": "text/html" });
+    const decodedResult = iconv.decode(body, "euc-kr");
+    res.end(decodedResult);
+  }
+);
+```
+
+## 151 [cheerio](https://www.npmjs.com/package/cheerio)란?
+
+스크래핑: 웹 사이트에 있는 특정 정보를 추출하는 기술
+cheerio는 html 형식으로 되어 있는 문자열에서 태그나 다른 부분을 제외한 값들만 뽑아낼 때 유용하다
+
+```js
+const cheerio = require("cheerio");
+
+const $ = cheerio.load('<html><h2 class="title">hello</h2></html>');
+const titleText = $(`h2.title`).text();
+
+console.log("title", titleText);
+```
+
+## 152 cheerio 이용해서 필요한 부분 추출하기
+
+[charset](https://www.npmjs.com/package/charset)
+
+- Get the content charset from header and html content-type.
+- ```js
+  res.on("data", function (chunk) {
+    console.log(charset(res.headers, chunk));
+    // or `console.log(charset(res, chunk));`
+    res.destroy();
+  });
+  ```
+
+```js
+const crawl = (callback) => (queryString) =>
+  request(
+    {
+      url: "https://www.google.com/search",
+      encoding: null,
+      method: "GET",
+      qs: queryString,
+      timeout: 1000,
+      followRedirect: true,
+      maxRedirects: 10,
+    },
+    (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        const enc = charset(response.headers, body); // enc-kr
+        const decodedResult = iconv.decode(body, enc);
+        callback(decodedResult);
+      } else {
+        console.log(`error ${response.statusCode}`);
+      }
+    }
+  );
+```
+
+```js
+const parse = (decodedResult) => {
+  const $ = cheerio.load(decodedResult);
+  const titles = $("h3.r").find("a");
+  for (let i = 0; i < titles.length; i += 1) {
+    const title = $(titles[i]).text();
+    console.log(title);
+  }
+};
+```
+
+```js
+crawler.crawl(parse)({ q: "서울대입구역 맛집" });
+```
+
+- jQuery 문법을 사용해서 html 문서를 가져오기: `const $ = cheerio.load( result )`
+- 콜백함수와 매개변수를 분리하고, 화살표 함수를 연달아 사용하여, 함수를 호출 할 때 매개변수와 매개변수를 가공할 콜백함수를 입력 할 수 있다.
+- `const fn = ( callback ) => ( param ) => { callback (param)}`
+- `fn( result => consol.log(result.a))({a: 'one'})`
+
+## 153 request 실행 결과 파일로 저장하기
+
+```js
+fs.appendFile("./title.txt", `${title}\n`);
+```
+
+## 154 [ejs](https://www.npmjs.com/package/ejs) 모듈 1
+
+템플렛(Template): 응답으로 보낼 웹 페이지의 모양을 미리 만들어 표준화한 것
+
+ejs 모듈
+
+- [playground](https://ionicabizau.github.io/ejs-playground/)
+- 동적 템플릿 엔진
+- 특정 형식 문자열을 HTML 형식의 문자열로 변환
+- `render()` (ejs 문자열을 HTML 문자열로 변경)
+- `<% CODE %>` (자바스크립트 코드 입력)
+- `<%= VALUE %>` (데이터 출력)
+
+```
+<% let table_name='Multiplication table 9 X'; %>
+<% let number = '9'; %>
+<h1><%= table_name %></h1>
+<hr />
+<% for(let i=1; i < 10; i++){ %>
+<h2><%= number %> X <%= i %> = <%= number * i %></h2>
+<% } %>
+```
+
+```js
+const ejs = require("ejs");
+const http = require("http");
+const fs = require("fs");
+
+http
+  .createServer((req, res) => {
+    fs.readFile(`${__dirname}/154.example.ejs`, "utf-8", (err, data) => {
+      if (err) console.log(err);
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(ejs.render(data));
+    });
+  })
+  .listen(5000, () => {
+    console.log("Server running at http://127.0.0.1:5000");
+  });
+```
+
+주의 사항
+
+- `ejs.render(data)`: 데이터는 string 타입이여야 한다. `readFile(file, encoding, ()=>{})` 에 인코딩이 입력 되지 않은 경우 raw Buffer 타입이 되므로, 반드시 'utf-8'를 입력해줘야 제대로 제대로 ejs 템플릿이 출력된다.
+- `ejs.renderFile(filename, (err, data) => { res.end(data)} )`
+  ```js
+  ejs.renderFile(`${__dirname}/154.example.ejs`, (err, data) => {
+    if (err) console.log(err);
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(data);
+  });
+  ```
+
+## 155 ejs 모듈 2
+
+`ejs.render(data, {table_name: '', number: ''}`
+
+render 함수에의 두번째 인자로 변수가 담긴 객체를 담아서 보내고, 템플릿에서 넘겨 받은 객체의 키로 변수에 접근이 가능 하다.
+
+```js
+http
+  .createServer((res, req) => {
+    fs.readFile(`${__dirname}/155.example.ejs`, "utf-8", (error, data) => {
+      req.writeHead(200, { "Content-Type": "text/html" });
+      req.end(
+        ejs.render(data, {
+          table_name: "Multiplication table 19 X",
+          number: "19",
+        })
+      );
+    });
+  })
+  .listen(5000, () => {
+    console.log("Server running at http://127.0.0.1:5000");
+  });
+```
+
+## 156 Pug 모듈 1
+
+express 프레임워크는 ejs, pug 를 템플릿으로 사용한다.
+pug 태그 대신 띄어쓰기와 문자열을 사용해서 HTML 보다 보다 직관적으로 간결하게 작성이 가능해진다.
+
+`const fn = pug.compile(data)`: pug 파일을 가져와서 html 을 반환하는 함수
+
+`res.end(fn())`: html 데이터를 response 객체에 전달 한다.
+
+```pug
+Html
+    head
+        title Pug example page
+        body
+            h1 Hello Pug module
+            h2 Nice to meet you
+            a(href="https://github.com/pugjs/pug", data-set="multiple Attribute") Github for Pug
+```
+
+```js
+const http = require("http");
+const pug = require("pug");
+const fs = require("fs");
+
+http
+  .createServer((req, res) => {
+    fs.readFile(`${__dirname}/156.pug.example.pug`, "utf-8", (err, data) => {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      const fn = pug.compile(data);
+      res.end(fn());
+    });
+  })
+  .listen(5000, () => console.log("Server running at http://127.0.0.1:5000"));
+```
+
+## pug 모듈 2
+
+- `style.`: style 태그 입력
+- `script.`: script 태그 입력
+- `//`: 주석
+- `#`
+  - div 태그
+  - `#header` -> `<div class="header"></div>`
+- `.`
+  - div class 속성
+  - `.url` -> `<div class="url"></div>`
+- `ul`: ul 태그
+- `li`: li 태그
+
+```pug
+html
+    head
+        title Pug example page
+        style.
+            body{
+                color: lightblue
+            }
+            h1{
+                color: blue
+            }
+        script.
+            let name = prompt("What is your name", "");
+            alert("I'm "+ name);
+        body
+            // annotation
+            #header
+            h1 Hello Pug module
+            h2 Nice to meet you
+            .url
+            a(href="https://github.com/pugjs/pug", data-set="multiple Attribute") Github for Pug
+            ul
+                li Item A
+                li Item B
+                li Item C
+```
+
+## pug 모듈 3
+
+html 출력 함수에 템플렛에 변수가 담긴 객체를 전달
+
+```js
+const fn = pug.compile(data);
+res.end(fn({ table_name: "19x", number: "19" }));
+```
+
+pug 특수 문자
+
+- `#{ 값 }`: 데이터 출력
+- `-`: 자바 스크립트 입력
+- `=`: 데이터를 출력
+
+```pug
+html
+    head
+        title Pug example page
+        body
+            style.
+            h1 #{table_name}
+            h2 #{number}
+            hr
+            - for(let i = 1; i < 10; i++){
+                p
+                #multiple
+                    #{number} X #{i} = #{number * i}
+            - }
+```

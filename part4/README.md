@@ -1262,3 +1262,316 @@ app.listen(3005, () => {
   console.log(`Server is running at http://127.0.0.1:3005`);
 });
 ```
+
+## 171 [node-schedule](https://www.npmjs.com/package/node-schedule) 모듈 1
+
+interval-based scheduling
+
+- setInterval(fn, ms): 설정된 주기 마다 특정 함수 실행
+
+time-based scheduling
+
+- node-schedule: 특정 시간에 실행되어야 할 때
+- node-scron: script가 실행되지 않을 때도 지속되어야 하는 경우
+
+```js
+const schedule = require("node-schedule");
+
+const date = new Date(2017, 11, 16, 19, 27, 0);
+// 2017년 12월 16일 오후 7시 27분에 수행할 작업
+
+console.log(date);
+// 2017-12-16T19:27:00.000Z
+
+const j = schedule.scheduleJob(date, () => {
+  console.log("no pain, no gain");
+});
+
+//  매 시간에 한번
+const rule = new schedule.RecurrenceRule();
+rule.minute = 32;
+
+const k = schedule.scheduleJob(rule, () => {
+  console.log(
+    "Laziness is nothing more than the habit of resting before you get tired"
+  );
+});
+
+// 작업 취소
+// j.cancel();
+// k.cancel();
+```
+
+## 172 node-schedule 모듈 2
+
+Cron
+
+- 유닉스 (Unix) 계열 컴퓨터 운영 체제의 시간 기반 잡 스케줄러
+- 고정된 시간, 날짜, 간격에 주기적으로 실행되는 잡
+
+```js
+const schedule = require("node-schedule");
+
+// Cron Format
+// *    *    *    *    *    *
+// ┬    ┬    ┬    ┬    ┬    ┬
+// │    │    │    │    │    │
+// │    │    │    │    │    └ day of week (0 - 7) (0 or 7 is Sun)
+// │    │    │    │    └───── month (1 - 12)
+// │    │    │    └────────── day of month (1 - 31)
+// │    │    └─────────────── hour (0 - 23)
+// │    └──────────────────── minute (0 - 59)
+// └───────────────────────── second (0 - 59, OPTIONAL)
+
+// Runs every weekday (Monday through Friday)
+// at 11:30:00 AM
+const j = schedule.scheduleJob("00 30 11 * * 1-5", () => {
+  console.log("Cron-style Scheduling");
+});
+
+// Recurrence Rule Scheduling
+// 0 - Sunday ~ 6 - Saturday
+// 월요일부터 일요일까지 17시 17분에 실행될 스케줄링
+const rule = new schedule.RecurrenceRule();
+rule.dayOfWeek = [0, new schedule.Range(0, 6)];
+rule.hour = 17;
+rule.minute = 17;
+
+const k = schedule.scheduleJob(rule, () => {
+  console.log("Recurrence Rule Scheduling");
+});
+
+// 작업 취소
+// j.cancel()
+// k.cancel()
+
+// Object Literal Syntax
+// 0 - Sunday ~ 6 - Saturday
+// every saturday at 21:10
+
+const l = schedule.scheduleJob({ hour: 21, minute: 10, dayOfWeek: 6 }, () => {
+  console.l("Object Literal Syntax");
+});
+
+// Set StartTime and EndTime
+const startTime = new Date(Date.now() + 5000);
+const endTime = new Date(startTime.getTime() + 5000);
+const m = schedule.scheduleJob(
+  {
+    start: startTime,
+    end: endTime,
+    rule: "*/1 * * * * *",
+  },
+  () => {
+    console.log("Set StartTime and EndTime");
+  }
+);
+```
+
+## 173 Nodemailer 모듈 1 - 메일 보내기 (TEXT)
+
+외부 모듈을 gmail에 사용 하기 위한 사전 작업
+
+1. google 보안 단계 낮추기: 보안 수준이 낮은 앱 허용: 사용
+2. 로그인 2단계 인증 설정하기: 2단계 인증을 해야 app password를 생성 할 수 있다.
+3. [app password 설정 하기](https://support.google.com/accounts/answer/185833)
+
+```js
+const cofig = require("./config");
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: "jongsun250@gmail.com",
+    pass: cofig.appPassword,
+  },
+});
+
+// https://temp-mail.org/en/
+
+const mailOptions = {
+  from: "jongsun250@gmail.com",
+  to: "gafif49682@questza.com",
+  subject: "Hello ヾ(•ω•`)o",
+  text: "Hello world?",
+};
+
+transporter.sendMail(mailOptions, (err, info) => {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log(`Message sent: ${info.response}`);
+    // Message sent: 250 2.0.0 OK  1606917746 o2sm2206957wrq.37 - gsmtp
+  }
+  transporter.close();
+});
+```
+
+## 174 Nodemailer 모듈 2 - 메일 보내기 (이미지)
+
+```js
+const mailOptions = {
+  from: "jongsun250@gmail.com",
+  to: "gafif49682@questza.com",
+  subject: "Hello ヾ(•ω•`)o HTML",
+  //   text: "Hello world?",
+  html: `<h1>Hello HTML</h1><a href="http://www.infopub.co.kr"><img src="https://picsum.photos/200/300"/></a></h1>`,
+};
+```
+
+## 175 Nodemailer 모듈 3 - 메일 보내기 (첨부파일)
+
+```js
+const mailOptions = {
+  from: "jongsun250@gmail.com",
+  to: "gafif49682@questza.com",
+  subject: "Hello ヾ(•ω•`)o attachment",
+  //   text: "Hello world?",
+  html: `<h1>Hello HTML</h1><a href="http://www.infopub.co.kr"><img src="https://picsum.photos/200/300"/></a></h1>`,
+  attachments: [
+    {
+      filename: "attachment_test.xlsx",
+      path: `${__dirname}/attachment_test.xlsx`,
+    },
+  ],
+};
+```
+
+## 183 socket.io 1 - 클라이언트
+
+웹 소켓은 HTML5에서 사용하는 표준 기술로 웹 소켓을 연결한 후 양방향으로 데이터를 주고 받을 수 있다.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SocketPage</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      console.log("Server connection");
+    </script>
+  </head>
+  <body>
+    <h1>Socket.io Page</h1>
+    <ul></ul>
+  </body>
+</html>
+```
+
+## 184 socket.io 2 - 서버
+
+1. express 객체 생성: `const app = require('express')()`
+2. http 로 express 서버 생성: `const server = require('http').createServer(app)`
+3. 소켓 에진에 서버 연결: `const io = require('socket.io')(server)`
+4. 소켓 서버에 접속 했을 때: `io.on('connect', (client) => {} )`
+5. 클라이언트에 접속을 종료 했을 때: `client.on('disconnect', () => {} )`
+
+```js
+const app = require("express")();
+const server = require("http").createServer(app);
+
+app.get("/", (req, res) => {
+  res.sendFile(`${__dirname}/socket.html`);
+});
+
+const io = require("socket.io")(server);
+
+io.on("connection", (client) => {
+  console.log(`Client connection`);
+  client.on("disconnect", () => {
+    console.log("Client disconnection");
+  });
+});
+
+server.listen(3000, () => {
+  console.log("Server is running at http://127.0.0.1:3000");
+});
+```
+
+## 185 socket.io 3 - 이벤트
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket Page</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      console.log("Server connection");
+
+      window.onload = function () {
+        //   Message 전달
+        document.getElementById("button").onclick = function () {
+          const text = document.getElementById("text").value;
+          console.log("clientMsg -> Server");
+          socket.emit("clientmsg", text);
+        };
+
+        // 실시간 Interval 전달
+        document.getElementById("status").onclick = function () {
+          console.log("Status event(Client)");
+          socket.emit("status");
+        };
+
+        // 이벤트 연결
+        socket.on("msg2", function (data) {
+          document.writeln("<li>");
+          document.writeln(data);
+          document.writeln("</li>");
+        });
+      };
+
+      socket.on("msg", function (data) {
+        console.log(data);
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Socket.io Page</h1>
+    <ul></ul>
+    <input type="text" id="text" />
+    <input type="button" id="button" value="send" />
+    <input type="button" id="status" value="IntervalTest" />
+  </body>
+</html>
+```
+
+```js
+const app = require("express")();
+const server = require("http").createServer(app);
+
+app.get("/", (req, res) => {
+  res.sendFile(`${__dirname}/185_socket_event.html`);
+});
+
+const io = require("socket.io")(server);
+
+io.on("connection", (client) => {
+  console.log(`Client connection`);
+
+  //   이벤트 연결 및 전달
+  client.on("clientmsg", (data) => {
+    console.log("This is client Data:", data);
+    client.emit("msg", data);
+  });
+
+  //   이벤트 연결 및 전달
+  client.on("status", () => {
+    console.log("Status event(server)");
+    setInterval(() => {
+      client.emit("msg2", "Hello socket.io");
+    }, 3000);
+  });
+});
+
+server.listen(3000, () => {
+  console.log("Server is running at http://127.0.0.1:3000");
+});
+```
